@@ -23,7 +23,7 @@ knitr::opts_chunk$set(
 `symbolic` is an R package designed to provide symbolic algebra capabilities natively in R using R functions.
 
 
-It is highly experimental and dependent on external contributors to be a fully fledged Computer Algebra System (CAS). It will be developed to the extent needed for my upstream packages, specifically distributional which requires many symbolic algebra tools not yet readily available in R.
+It is highly experimental and dependent on external contributors to be a fully fledged Computer Algebra System (CAS). It will be developed to the extent needed for my upstream packages, specifically distributional which requires many symbolic algebra tools not yet readily available in R. Currently powered by [yacas](http://www.yacas.org/) via [Ryacas](https://cran.r-project.org/package=Ryacas).
 
 
 ## Installation

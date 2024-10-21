@@ -33,3 +33,32 @@ You can install the development version of symbolic like so:
 ``` r
 remotes::install_github("mitchelloharawild/symbolic")
 ```
+
+## Usage
+
+Prepare a function for symbolic transformations with `as_symbolic()`.
+
+```{r}
+library(symbolic)
+.f <- function(x, y) log(x + 1 + y)
+.f
+.f_sym <- as_symbolic(.f)
+.f_sym
+```
+
+Internally, we use yacas for all the hard work.
+
+```{r}
+.f_yac <- symbolic:::as_yacas(.f)
+.f_yac
+symbolic:::r_from_yacas(.f_yac)
+```
+
+Typical base functions for math have `symbolic` methods which return functions.
+
+```{r}
+solve(.f_sym, y, "x")
+deriv(.f_sym, "x")
+integrate(.f_sym, "x")
+```
+

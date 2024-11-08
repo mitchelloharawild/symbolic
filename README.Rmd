@@ -40,7 +40,7 @@ Prepare a function for symbolic transformations with `as_symbolic()`.
 
 ```{r}
 library(symbolic)
-.f <- function(x, y) log(x + 1 + y)
+.f <- function(x, y) log(2*x + 1 + y)
 .f
 .f_sym <- as_symbolic(.f)
 .f_sym
@@ -57,8 +57,13 @@ symbolic:::r_from_yacas(.f_yac)
 Typical base functions for math have `symbolic` methods which return functions.
 
 ```{r}
-solve(.f_sym, y, "x")
-deriv(.f_sym, "x")
+# log(2 * x + 1 + y) == y # for x
+solve(.f_sym, 0, "x")
+deriv(.f_sym, "x")(2, 1)
 integrate(.f_sym, "x")
+
+.f_sym |> 
+  deriv("x") |> 
+  solve(y, "x")
 ```
 

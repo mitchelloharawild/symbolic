@@ -20,7 +20,7 @@ as_symbolic <- function(.f) {
 #' @export
 print.symbolic <- function(x, ...) {
   cat(sprintf(
-    "{%s}: %s",
+    "{%s} -> %s",
     paste0(names(formals(x)), collapse = ", "),
     deparse(body(x))
   ))

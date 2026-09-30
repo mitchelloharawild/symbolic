@@ -6,10 +6,23 @@
 \alias{symbolic-package}
 \title{symbolic: Computer Algebra System for Symbolic Functional Manipulation}
 \description{
-Provides symbolic algebra capabilities for R. Includes functions for symbolic manipulation, simplification, differentiation, integration, equation solving, and more. Ideal for users working with algebraic expressions and symbolic computation in mathematics and scientific applications.
+Symbolic differentiation, integration and equation solving for R functions. Ordinary R functions are manipulated algebraically and the results are returned as R functions, which can be evaluated or transformed further. Symbolic algebra is performed by the 'Maxima' computer algebra system via the 'maxima' package.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/mitchelloharawild/symbolic}
+  \item Report bugs at \url{https://github.com/mitchelloharawild/symbolic/issues}
+}
+
 }
 \author{
 \strong{Maintainer}: Mitchell O'Hara-Wild \email{mail@mitchelloharawild.com} (\href{https://orcid.org/0000-0001-6729-7695}{ORCID})
+
+Authors:
+\itemize{
+  \item Mitchell O'Hara-Wild \email{mail@mitchelloharawild.com} (\href{https://orcid.org/0000-0001-6729-7695}{ORCID})
+}
 
 }
 \keyword{internal}

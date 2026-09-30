@@ -1,24 +1,31 @@
 Package: symbolic
 Title: Computer Algebra System for Symbolic Functional Manipulation
 Version: 0.0.0.9000
-Authors@R: 
+Authors@R:
     c(person(given = "Mitchell",
              family = "O'Hara-Wild",
              role = c("aut", "cre"),
              email = "mail@mitchelloharawild.com",
              comment = c(ORCID = "0000-0001-6729-7695")))
-Description: Provides symbolic algebra capabilities for R. Includes functions 
-    for symbolic manipulation, simplification, differentiation, integration,
-    equation solving, and more. Ideal for users working with algebraic
-    expressions and symbolic computation in mathematics and scientific 
-    applications.
+Description: Symbolic differentiation, integration and equation solving for R
+    functions. Ordinary R functions are manipulated algebraically and the
+    results are returned as R functions, which can be evaluated or transformed
+    further. Symbolic algebra is performed by the 'Maxima' computer algebra
+    system via the 'maxima' package.
 License: MIT + file LICENSE
-Suggests: 
+URL: https://github.com/mitchelloharawild/symbolic
+BugReports: https://github.com/mitchelloharawild/symbolic/issues
+Depends:
+    R (>= 4.1.0)
+Imports:
+    maxima,
+    rlang,
+    stats
+Remotes:
+    mitchelloharawild/maxima
+Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
-Imports: 
-    rlang,
-    Ryacas
+Config/roxygen2/version: 8.0.0

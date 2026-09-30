@@ -2,23 +2,98 @@
 % Please edit documentation in R/symbolic.R
 \name{as_symbolic}
 \alias{as_symbolic}
-\title{Convert a Function to Symbolic Class}
+\alias{is_symbolic}
+\alias{print.symbolic}
+\title{Symbolic functions}
 \usage{
-as_symbolic(.f)
+as_symbolic(f)
+
+is_symbolic(x)
+
+\method{print}{symbolic}(x, ...)
 }
 \arguments{
-\item{.f}{A function to be converted into a symbolic function.}
+\item{f}{A function to treat symbolically. Its body must consist of
+operations understood by \href{https://maxima.sourceforge.io/}{Maxima} (via
+the maxima package), and its formals must not include \code{...}.}
+
+\item{x}{An object.}
+
+\item{...}{Not used.}
 }
 \value{
-A function with an added "symbolic" class, allowing it to be used in symbolic transformations.
+\code{as_symbolic()} returns \code{f} with the class \code{"symbolic"} added.
+
+\code{is_symbolic()} returns \code{TRUE} if \code{x} is a symbolic function, and \code{FALSE}
+otherwise.
 }
 \description{
-This function takes a regular function and converts it into a symbolic function by assigning it a class of "symbolic".
-It is intended to prepare functions for symbolic transformations using the \code{symbolic} package.
-}
-\examples{
-.f <- function(x) x^2
-symbolic_f <- as_symbolic(.f)
-class(symbolic_f)  # Returns "symbolic"
+\code{as_symbolic()} marks a function as symbolic, allowing it to be manipulated
+algebraically by \code{\link[=derivative]{derivative()}}, \code{\link[=integral]{integral()}} and \code{\link[=solve]{solve()}}.
 
+Symbolic functions are ordinary R functions and can be evaluated as usual.
+The class only affects how the function is printed, and which methods are
+used to transform it.
+}
+\section{How functions are converted}{
+
+To transform a symbolic function, its body is evaluated with each argument
+replaced by a Maxima symbol. Default values of arguments are ignored, so
+every argument is a free symbol.
+
+Names in the body which aren't arguments follow R's usual rules for
+closures: they are evaluated as ordinary R code, in the function's
+environment, and their current values are fixed into the result.
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{a <- 2
+derivative(as_symbolic(function(x) a * x^2))
+#> \{x\} -> 4 * x
+}\if{html}{\out{</div>}}
+
+A name which isn't defined is an error. To keep a name symbolic, make it an
+argument of the function, as in \code{function(x, a) a * x^2}.
+
+This differs from the other arguments of \code{\link[=derivative]{derivative()}}, \code{\link[=integral]{integral()}} and
+\code{\link[=solve]{solve()}}. Bounds, \code{b} and \code{target} are code rather than functions, so
+every name in them is a symbol, and R values are injected with \verb{!!}.
+}
+
+\section{Exact constants}{
+
+Maxima works with exact numbers where it can, but R evaluates \code{1/2} to the
+decimal \code{0.5} before Maxima sees it. So that results stay exact, constants
+\emph{written} in the body of a function, in bounds and in \code{b} are kept exact:
+\itemize{
+\item literal fractions and powers of whole numbers, such as \code{1/2}, \code{2^-1} and
+\code{1/(2 * 3)};
+\item \code{sqrt()}, \code{exp()} and \code{log()} of whole numbers (or of such fractions),
+such as \code{sqrt(2)} and \code{exp(1)};
+\item \code{pi}, unless it is an argument of the function.
+}
+
+Values which R has already computed arrive as decimals. This includes
+values held in variables (\code{half <- 1/2}, used in a body as \code{x^half}) and
+values injected with \verb{!!} (\code{upper = !!half}). Maxima may keep them as
+decimals (as \code{\link[=derivative]{derivative()}} does), or convert them to nearby fractions.
+To keep a constant exact, write it literally.
+
+\code{Inf} and \code{-Inf} are only meaningful as a whole bound of \code{\link[=integral]{integral()}}
+(\code{upper = Inf}, or \code{upper = !!Inf}). They can't be part of a larger
+expression in a bound, and are rejected in \code{b}.
+}
+
+\examples{
+f <- as_symbolic(function(x, y) log(2 * x + 1 + y))
+f
+
+# Symbolic functions are ordinary functions, and can still be evaluated.
+f(1, 0)
+
+# They can be transformed algebraically, producing new symbolic functions.
+derivative(f, x)
+derivative(f, x)(1, 0)
+
+}
+\seealso{
+\code{\link[=derivative]{derivative()}}, \code{\link[=integral]{integral()}}, \code{\link[=solve.symbolic]{solve.symbolic()}}
 }

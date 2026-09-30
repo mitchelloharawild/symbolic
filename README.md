@@ -18,8 +18,9 @@ It is highly experimental and dependent on external contributors to be a
 fully fledged Computer Algebra System (CAS). It will be developed to the
 extent needed for my upstream packages, specifically distributional
 which requires many symbolic algebra tools not yet readily available in
-R. Currently powered by [yacas](http://www.yacas.org/) via
-[Ryacas](https://cran.r-project.org/package=Ryacas).
+R. Currently powered by [Maxima](https://maxima.sourceforge.io/),
+embedded in R via the
+[maxima](https://github.com/mitchelloharawild/maxima) package.
 
 ## Installation
 
@@ -29,43 +30,133 @@ You can install the development version of symbolic like so:
 remotes::install_github("mitchelloharawild/symbolic")
 ```
 
+This also installs the
+[maxima](https://github.com/mitchelloharawild/maxima) package, which
+compiles Maxima (and the ECL Lisp it runs on) from source. No system
+installation of Maxima is needed, but the first install takes a while.
+
 ## Usage
 
 Prepare a function for symbolic transformations with `as_symbolic()`.
 
 ``` r
 library(symbolic)
-#> 
-#> Attaching package: 'symbolic'
-#> The following object is masked from 'package:stats':
-#> 
-#>     integrate
-.f <- function(x, y) log(x + 1 + y)
-.f
-#> function(x, y) log(x + 1 + y)
-.f_sym <- as_symbolic(.f)
-.f_sym
-#> {x, y}: log(x + 1 + y)
+f <- as_symbolic(function(x, y) log(2*x + 1 + y))
+f
+#> {x, y} -> log(2 * x + 1 + y)
 ```
 
-Internally, we use yacas for all the hard work.
+Symbolic functions are transformed with `derivative()`, `integral()` and
+`solve()`. Each takes the argument to work with as a bare name, and
+returns a new symbolic function.
 
 ``` r
-.f_yac <- symbolic:::as_yacas(.f)
-.f_yac
-#> y: Ln(x+y+1)
-symbolic:::r_from_yacas(.f_yac)
-#> {x, y}: log(x + y + 1)
+derivative(f, x)
+#> {x, y} -> 2/(2 * x + y + 1)
+integral(f, x)
+#> {x, y} -> (-2 * x - y + (2 * x + y + 1) * log(2 * x + y + 1) - 1)/2
+
+# Solve log(2*x + 1 + y) == 0 for x
+solve(f, 0, x)
+#> {y} -> cbind(-y/2)
 ```
 
-Typical base functions for math have `symbolic` methods which return
-functions.
+`solve()` returns one column per solution, so its results always return
+a matrix. Without `b`, it returns the inverse function, as
+`base::solve()` does for matrices.
 
 ``` r
-solve(.f_sym, y, "x")
-#> {y}: exp(y) - 1 - y
-deriv(.f_sym, "x")
-#> {x, y}: 1/(x + y + 1)
-integrate(.f_sym, "x")
-#> {x, y}: (x + y + 1) * log(x + y + 1) - (x + y + 1)
+solve(as_symbolic(function(x) exp(x)))
+#> {x} -> cbind(log(x))
+solve(as_symbolic(function(x) x^2), y, x)(c(1, 4, 9))
+#>      [,1] [,2]
+#> [1,]   -1    1
+#> [2,]   -2    2
+#> [3,]   -3    3
 ```
+
+Since the results are ordinary R functions, they can be evaluated
+directly.
+
+``` r
+derivative(f, x)(2, 1)
+#> [1] 0.3333333
+```
+
+Definite integrals drop the variable of integration, as the result no
+longer depends on it. Bounds are bare R expressions, which may be
+infinite or refer to the other arguments.
+
+``` r
+g <- as_symbolic(function(x, y) x^2 + x * y)
+integral(g, x, lower = 0, upper = 1)
+#> {y} -> (3 * y + 2)/6
+integral(g, x, lower = 0, upper = y)
+#> {y} -> 5 * y^3/6
+integral(as_symbolic(function(x) exp(-x^2)), x, lower = -Inf, upper = Inf)
+#> {} -> sqrt(pi)
+```
+
+Every name in a bound is a symbol, and symbols which aren’t already
+arguments become arguments of the result. Use `!!` to inject the value
+of a variable instead. A bound can even mention the variable of
+integration, so integrating a density up to `x` gives its cumulative
+distribution function.
+
+``` r
+dens <- as_symbolic(function(x, rate) rate * exp(-rate * x))
+support_min <- 0
+integral(dens, x, lower = !!support_min, upper = q)
+#> {q, rate} -> rate * (1/rate - exp(-rate * q)/rate)
+integral(dens, x, lower = 0, upper = x)
+#> {x, rate} -> rate * (1/rate - exp(-x * rate)/rate)
+```
+
+Transformations compose, so they can be chained together.
+
+``` r
+f |>
+  derivative(x) |>
+  solve(y, x)
+#> {y} -> cbind(-(y + y^2 - 2)/(2 * y))
+```
+
+The same rules apply to `solve()`’s right hand side as to bounds: every
+name is a symbol, which is why `y` above is solved against rather than
+evaluated. Names which aren’t already arguments of the function become
+arguments of the result.
+
+`deriv()` works as it does for `stats::deriv()`, returning a function
+whose value carries its gradient (and optionally Hessian) as attributes,
+but it can differentiate any function Maxima can.
+
+``` r
+deriv(f, hessian = TRUE)(1, 0)
+#> [1] 1.098612
+#> attr(,"gradient")
+#>              x         y
+#> [1,] 0.6666667 0.3333333
+#> attr(,"hessian")
+#> , , x
+#> 
+#>               x          y
+#> [1,] -0.4444444 -0.2222222
+#> 
+#> , , y
+#> 
+#>               x          y
+#> [1,] -0.2222222 -0.1111111
+```
+
+## Related work
+
+`symbolic` is a thin functional interface over
+[maxima](https://github.com/mitchelloharawild/maxima), which exposes
+[Maxima](https://maxima.sourceforge.io/) expressions directly. Use
+`maxima` if you want to work with symbolic *expressions*; use `symbolic`
+if you want to work with R *functions* and get R functions back.
+
+To keep `symbolic` suitable as a low-level dependency, it does not mask
+any base or `stats` functions. In particular `stats::integrate()` is
+left untouched, so numerical integration continues to work as usual
+after attaching `symbolic`.
